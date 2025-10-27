@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { ref, watch, nextTick } from 'vue'
+import { ref, watch, nextTick, onMounted, onUnmounted } from 'vue'
 import type { Conversation } from '@/types'
 import ChatMessage from './ChatMessage.vue'
+import ScrollToBottomButton from './ScrollToBottomButton.vue'
 
 interface Props {
   conversation: Conversation | null | undefined
@@ -10,44 +11,69 @@ interface Props {
 const props = defineProps<Props>()
 
 const messagesContainer = ref<HTMLDivElement | null>(null)
+const showScrollButton = ref(false)
 
-const scrollToBottom = async (): Promise<void> => {
+// 滾動到底部
+const scrollToBottom = async (smooth = true): Promise<void> => {
   await nextTick()
   if (messagesContainer.value) {
-    messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight
+    messagesContainer.value.scrollTo({
+      top: messagesContainer.value.scrollHeight,
+      behavior: smooth ? 'smooth' : 'auto'
+    })
   }
+}
+
+// 檢查是否接近底部
+const checkScrollPosition = () => {
+  if (!messagesContainer.value) return
+
+  const { scrollTop, scrollHeight, clientHeight } = messagesContainer.value
+  const distanceFromBottom = scrollHeight - scrollTop - clientHeight
+
+  // 如果距離底部超過 200px，顯示按鈕
+  showScrollButton.value = distanceFromBottom > 200
+}
+
+// 監聽滾動事件
+const handleScroll = () => {
+  checkScrollPosition()
+}
+
+// 點擊按鈕滾動到底部
+const handleScrollToBottom = () => {
+  scrollToBottom(true)
 }
 
 // 監聽訊息變化，自動滾動至底部
 watch(
   () => props.conversation?.messages,
   () => {
-    scrollToBottom()
+    if (!showScrollButton.value) {
+      scrollToBottom(false)
+    }
+    // 訊息變化後重新檢查
+    nextTick(() => {
+      checkScrollPosition()
+    })
   },
   { deep: true }
 )
 
-// ✅ 建議服務選項
-const suggestionServices = [
-  {
-    icon: '🔍',
-    title: '幫我查找內部業務、法規知識',
-    description: '搜尋公司內部文件、政策法規',
-    prompt: '我想查找內部業務知識'
-  },
-  {
-    icon: '📋',
-    title: '辦理業務手續',
-    description: '協助處理各類業務申請流程',
-    prompt: '我想了解如何辦理業務'
+// 組件掛載時設定滾動監聽
+onMounted(() => {
+  if (messagesContainer.value) {
+    messagesContainer.value.addEventListener('scroll', handleScroll)
+    checkScrollPosition()
   }
-]
+})
 
-// ✅ 點擊建議服務（可選實作）
-const handleSuggestionClick = (prompt: string) => {
-  console.log('選擇建議:', prompt)
-  // 這裡可以觸發發送訊息的邏輯
-}
+// 組件卸載時移除監聽
+onUnmounted(() => {
+  if (messagesContainer.value) {
+    messagesContainer.value.removeEventListener('scroll', handleScroll)
+  }
+})
 </script>
 
 <template>
@@ -57,7 +83,7 @@ const handleSuggestionClick = (prompt: string) => {
       <div class="messages-content-wrapper">
         <!-- Empty State -->
         <div v-if="!conversation || conversation.messages.length === 0" class="empty-state">
-          <!-- Icon -->
+          <!-- 保持原有的空狀態設計 -->
           <div class="empty-state-icon">
             <svg class="icon-chat" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
@@ -65,7 +91,6 @@ const handleSuggestionClick = (prompt: string) => {
             </svg>
           </div>
 
-          <!-- Welcome Text -->
           <div class="welcome-content">
             <h2 class="welcome-title">開始新對話</h2>
             <p class="welcome-description">
@@ -73,14 +98,19 @@ const handleSuggestionClick = (prompt: string) => {
             </p>
           </div>
 
-          <!-- Suggestion Services -->
           <div class="suggestion-grid">
-            <button v-for="service in suggestionServices" :key="service.title" class="suggestion-card"
-              @click="handleSuggestionClick(service.prompt)">
-              <span class="suggestion-icon">{{ service.icon }}</span>
+            <button class="suggestion-card">
+              <span class="suggestion-icon">🔍</span>
               <div class="suggestion-text">
-                <h3 class="suggestion-title">{{ service.title }}</h3>
-                <p class="suggestion-description">{{ service.description }}</p>
+                <h3 class="suggestion-title">幫我查找內部業務、法規知識</h3>
+                <p class="suggestion-description">搜尋公司內部文件、政策法規</p>
+              </div>
+            </button>
+            <button class="suggestion-card">
+              <span class="suggestion-icon">📋</span>
+              <div class="suggestion-text">
+                <h3 class="suggestion-title">辦理業務手續</h3>
+                <p class="suggestion-description">協助處理各類業務申請流程</p>
               </div>
             </button>
           </div>
@@ -92,6 +122,9 @@ const handleSuggestionClick = (prompt: string) => {
         </div>
       </div>
     </div>
+
+    <!-- ✅ 滾動到底部按鈕 -->
+    <ScrollToBottomButton :show="showScrollButton" @click="handleScrollToBottom" />
   </div>
 </template>
 
@@ -101,6 +134,7 @@ const handleSuggestionClick = (prompt: string) => {
   height: 100%;
   display: flex;
   flex-direction: column;
+  position: relative;
 }
 
 /* ========== 訊息滾動區域 ========== */
@@ -108,6 +142,7 @@ const handleSuggestionClick = (prompt: string) => {
   flex: 1;
   overflow-y: auto;
   padding: 1.5rem 1rem;
+  scroll-behavior: smooth;
 }
 
 /* 自訂滾動條 */

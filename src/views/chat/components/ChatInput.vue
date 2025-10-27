@@ -75,7 +75,7 @@ const handleUpload = (): void => {
     <div class="input-container input-gradient">
         <div class="input-area-container">
             <div class="input-area-wrapper">
-                <!-- ✅ 第一行：輸入區域 -->
+                <!-- 第一行：輸入區域 -->
                 <div class="textarea-row">
                     <div class="textarea-container">
                         <div ref="textareaRef" contenteditable="true" role="textbox"
@@ -86,7 +86,7 @@ const handleUpload = (): void => {
                     </div>
                 </div>
 
-                <!-- ✅ 第二行：操作按鈕 -->
+                <!-- 第二行：操作按鈕 -->
                 <div class="actions-row">
                     <!-- 左側：上傳按鈕 -->
                     <div class="actions-left">
@@ -155,7 +155,7 @@ const handleUpload = (): void => {
     left: 0;
     right: 0;
     height: 60px;
-    /* ✅ 使用 CSS 變數，淺色模式自動使用 #fcfcf9 */
+    /* 使用 CSS 變數，淺色模式自動使用 #fcfcf9 */
     background: linear-gradient(to bottom,
             transparent 0%,
             color-mix(in srgb, var(--bg-primary) 30%, transparent) 20%,
@@ -180,7 +180,7 @@ const handleUpload = (): void => {
     width: 100%;
     background: var(--bg-primary);
     border-radius: 16px;
-    /* ✅ 減少圓角 */
+    /* 減少圓角 */
     box-shadow: 0px 2px 6px rgba(0, 0, 0, 0.12), 0px 0px 0px 1px var(--border-primary);
     transition: box-shadow 0.2s cubic-bezier(0.2, 0, 0, 1);
     padding: 12px;
@@ -213,7 +213,7 @@ const handleUpload = (): void => {
     word-wrap: break-word;
     white-space: pre-wrap;
     cursor: text;
-    /* ✅ 修正游標 */
+    /* 修正游標 */
 }
 
 .rich-textarea[data-placeholder]:empty::before {
